@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My Asset</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #141E30, #243B55);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+.container {
+    width: 520px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    text-align: center;
+}
+
+h1 {
+    margin: 0 0 18px 0;
+}
+
+.topbar{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    gap: 12px;
+}
+
+.btn{
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: white;
+    font-weight: 700;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.25);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn:hover{
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.25);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+th {
+    font-size: 16px;
+    padding: 10px;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+}
+
+td {
+    padding: 14px 10px;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.muted{
+    color: rgba(255,255,255,0.75);
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+.value-usd { font-weight: bold; color: #00ffcc; }
+.value-krw { font-weight: bold; color: #ffd700; }
+
+.totalbox{
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.total-title{
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+.total-usd{
+    font-size: 22px;
+    font-weight: 900;
+    color: #00ffcc;
+}
+.total-krw{
+    margin-top: 6px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #ffd700;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="topbar">
+        <a class="btn" href="index.html">⬅ 돌아가기</a>
+        <div class="muted" id="updated">업데이트: -</div>
+    </div>
+
+    <h1>📌 내 자산</h1>
+
+    <table>
+        <tr>
+            <th>자산</th>
+            <th>보유량</th>
+            <th>평가(USD)</th>
+            <th>평가(KRW)</th>
+        </tr>
+
+        <tr>
+            <td>Bitcoin</td>
+            <td id="hold-btc">0.5</td>
+            <td id="val-btc-usd" class="value-usd">불러오는 중...</td>
+            <td id="val-btc-krw" class="value-krw">불러오는 중...</td>
+        </tr>
+
+        <tr>
+            <td>Ethereum</td>
+            <td id="hold-eth">0.33</td>
+            <td id="val-eth-usd" class="value-usd">불러오는 중...</td>
+            <td id="val-eth-krw" class="value-krw">불러오는 중...</td>
+        </tr>
+
+        <tr>
+            <td>Gold (1g)</td>
+            <td id="hold-gold">100</td>
+            <td id="val-gold-usd" class="value-usd">불러오는 중...</td>
+            <td id="val-gold-krw" class="value-krw">불러오는 중...</td>
+        </tr>
+    </table>
+
+    <div class="totalbox">
+        <div class="total-title">💎 총 자산 평가</div>
+        <div id="total-usd" class="total-usd">불러오는 중...</div>
+        <div id="total-krw" class="total-krw">불러오는 중...</div>
+    </div>
+
+    <div class="muted">※ 10초마다 자동 갱신</div>
+</div>
+
+<script>
+const HOLD = {
+  btc: 0.5,
+  eth: 0.33,
+  gold_g: 100
+};
+
+function fmtUSD(x) {
+  return "$ " + x.toLocaleString(undefined, {maximumFractionDigits: 2});
+}
+function fmtKRW(x) {
+  return "₩ " + x.toLocaleString(undefined, {maximumFractionDigits: 0});
+}
+
+function fetchAssetValue() {
+  fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether-gold&vs_currencies=usd,krw")
+    .then(r => r.json())
+    .then(data => {
+      const btcUsd = data.bitcoin.usd, btcKrw = data.bitcoin.krw;
+      const ethUsd = data.ethereum.usd, ethKrw = data.ethereum.krw;
+
+      // tether-gold는 1 XAU(트로이온스) 기준 가격 -> 1g로 변환
+      const goldPerGramUsd = data["tether-gold"].usd / 31.1035;
+      const goldPerGramKrw = data["tether-gold"].krw / 31.1035;
+
+      const valBtcUsd = HOLD.btc * btcUsd;
+      const valBtcKrw = HOLD.btc * btcKrw;
+
+      const valEthUsd = HOLD.eth * ethUsd;
+      const valEthKrw = HOLD.eth * ethKrw;
+
+      const valGoldUsd = HOLD.gold_g * goldPerGramUsd;
+      const valGoldKrw = HOLD.gold_g * goldPerGramKrw;
+
+      document.getElementById("val-btc-usd").innerText = fmtUSD(valBtcUsd);
+      document.getElementById("val-btc-krw").innerText = fmtKRW(valBtcKrw);
+
+      document.getElementById("val-eth-usd").innerText = fmtUSD(valEthUsd);
+      document.getElementById("val-eth-krw").innerText = fmtKRW(valEthKrw);
+
+      document.getElementById("val-gold-usd").innerText = fmtUSD(valGoldUsd);
+      document.getElementById("val-gold-krw").innerText = fmtKRW(valGoldKrw);
+
+      const totalUsd = valBtcUsd + valEthUsd + valGoldUsd;
+      const totalKrw = valBtcKrw + valEthKrw + valGoldKrw;
+
+      document.getElementById("total-usd").innerText = fmtUSD(totalUsd);
+      document.getElementById("total-krw").innerText = fmtKRW(totalKrw);
+
+      const now = new Date();
+      document.getElementById("updated").innerText =
+        "업데이트: " + now.toLocaleString();
+    })
+    .catch(() => {
+      document.getElementById("total-usd").innerText = "불러오기 실패";
+      document.getElementById("total-krw").innerText = "불러오기 실패";
+    });
+}
+
+fetchAssetValue();
+setInterval(fetchAssetValue, 10000);
+</script>
+
+</body>
+</html>
