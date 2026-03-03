@@ -30,7 +30,7 @@ h1 {
 }
 
 table {
-    width: 420px;
+    width: 400px;
     border-collapse: collapse;
 }
 
@@ -54,13 +54,14 @@ td {
     font-weight: bold;
     color: #ffd700;
 }
+
 </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h1>💰 자산 실시간 가격</h1>
+    <h1>💰 오늘의 코인 & 금 가격</h1>
 
     <table>
         <tr>
@@ -68,68 +69,43 @@ td {
             <th>USD</th>
             <th>KRW</th>
         </tr>
+
         <tr>
             <td>Bitcoin</td>
             <td id="btc-usd" class="price-usd">불러오는 중...</td>
             <td id="btc-krw" class="price-krw">불러오는 중...</td>
         </tr>
+
         <tr>
             <td>Ethereum</td>
             <td id="eth-usd" class="price-usd">불러오는 중...</td>
             <td id="eth-krw" class="price-krw">불러오는 중...</td>
         </tr>
+
         <tr>
-            <td>Gold (1g)</td>
+            <td>Gold (1oz)</td>
             <td id="gold-usd" class="price-usd">불러오는 중...</td>
             <td id="gold-krw" class="price-krw">불러오는 중...</td>
         </tr>
+
     </table>
 </div>
 
 <script>
 function fetchPrice() {
-
-    // 코인 가격
-    fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw")
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether-gold&vs_currencies=usd,krw")
         .then(response => response.json())
         .then(data => {
+
             document.getElementById("btc-usd").innerText = "$ " + data.bitcoin.usd.toLocaleString();
             document.getElementById("btc-krw").innerText = "₩ " + data.bitcoin.krw.toLocaleString();
 
             document.getElementById("eth-usd").innerText = "$ " + data.ethereum.usd.toLocaleString();
             document.getElementById("eth-krw").innerText = "₩ " + data.ethereum.krw.toLocaleString();
+
+            document.getElementById("gold-usd").innerText = "$ " + data["tether-gold"].usd.toLocaleString();
+            document.getElementById("gold-krw").innerText = "₩ " + data["tether-gold"].krw.toLocaleString();
         });
-
-// ✅ 금 가격: goldprice.org 데이터 + CORS 우회(allorigins)로 GitHub Pages에서도 동작
-const GOLD_URL = "https://data-asg.goldprice.org/dbXRates/USD"; // 금(oz) 시세 데이터
-const GOLD_PROXY = "https://api.allorigins.win/raw?url=" + encodeURIComponent(GOLD_URL); // CORS 우회 :contentReference[oaicite:1]{index=1}
-
-Promise.all([
-  fetch(GOLD_PROXY).then(r => r.json()),                         // 금(oz) USD
-  fetch("https://api.exchangerate-api.com/v4/latest/USD").then(r => r.json()) // USD→KRW
-])
-  .then(([goldJson, fxJson]) => {
-    const item = goldJson.items?.[0];
-    if (!item) throw new Error("gold item missing");
-
-    // goldprice.org 응답에서 금(oz) 가격 필드 추출 (환경에 따라 필드명이 다를 수 있어 후보 처리) :contentReference[oaicite:2]{index=2}
-    const goldPerOunceUSD = Number(item.xauPrice ?? item.gold ?? item.price ?? item.ask ?? item.bid);
-    if (!Number.isFinite(goldPerOunceUSD) || goldPerOunceUSD <= 0) throw new Error("gold price missing");
-
-    const goldPerGramUSD = goldPerOunceUSD / 31.1035;
-    document.getElementById("gold-usd").innerText = "$ " + goldPerGramUSD.toFixed(2);
-
-    const usdToKrw = fxJson.rates?.KRW;
-    if (!Number.isFinite(usdToKrw) || usdToKrw <= 0) throw new Error("KRW rate missing");
-
-    const goldPerGramKRW = goldPerGramUSD * usdToKrw;
-    document.getElementById("gold-krw").innerText = "₩ " + Math.round(goldPerGramKRW).toLocaleString();
-  })
-  .catch(err => {
-    console.error("Gold fetch failed:", err);
-    document.getElementById("gold-usd").innerText = "불러오기 실패";
-    document.getElementById("gold-krw").innerText = "불러오기 실패";
-  });
 }
 
 fetchPrice();
