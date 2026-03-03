@@ -1,34 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <title>Crypto Price</title>
+<meta charset="UTF-8">
+<title>Crypto Price</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #141E30, #243B55);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 30px;
+}
+
+table {
+    width: 300px;
+    border-collapse: collapse;
+}
+
+th {
+    font-size: 18px;
+    padding: 10px;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+}
+
+td {
+    padding: 15px;
+    font-size: 20px;
+}
+
+.price {
+    font-weight: bold;
+    font-size: 22px;
+    color: #00ffcc;
+    transition: 0.3s;
+}
+
+.price:hover {
+    transform: scale(1.1);
+}
+</style>
 </head>
+
 <body>
 
-<h1>오늘의 비트코인과 이더리움 가격</h1>
+<div class="container">
+    <h1>💰 오늘의 코인 가격</h1>
 
-<table border="1">
-    <tr>
-        <th>코인</th>
-        <th>USD 가격</th>
-    </tr>
-    <tr>
-        <td>Bitcoin</td>
-        <td id="btc">불러오는 중...</td>
-    </tr>
-    <tr>
-        <td>Ethereum</td>
-        <td id="eth">불러오는 중...</td>
-    </tr>
-</table>
+    <table>
+        <tr>
+            <th>코인</th>
+            <th>USD 가격</th>
+        </tr>
+        <tr>
+            <td>Bitcoin</td>
+            <td id="btc" class="price">불러오는 중...</td>
+        </tr>
+        <tr>
+            <td>Ethereum</td>
+            <td id="eth" class="price">불러오는 중...</td>
+        </tr>
+    </table>
+</div>
 
 <script>
 function fetchPrice() {
     fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd")
         .then(response => response.json())
         .then(data => {
-            document.getElementById("btc").innerText = data.bitcoin.usd;
-            document.getElementById("eth").innerText = data.ethereum.usd;
+            document.getElementById("btc").innerText = "$ " + data.bitcoin.usd.toLocaleString();
+            document.getElementById("eth").innerText = "$ " + data.ethereum.usd.toLocaleString();
         });
 }
 
