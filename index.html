@@ -100,17 +100,19 @@ function fetchPrice() {
             document.getElementById("eth-krw").innerText = "₩ " + data.ethereum.krw.toLocaleString();
         });
 
-    // ✅ 금 가격 (goldprice.org 데이터 사용) + 환율로 KRW 계산
-// ✅ 금 가격 (대체 소스) + 환율로 KRW 계산
+// ✅ 금 가격: goldprice.org 데이터 + CORS 우회(allorigins)로 GitHub Pages에서도 동작
+const GOLD_URL = "https://data-asg.goldprice.org/dbXRates/USD"; // 금(oz) 시세 데이터
+const GOLD_PROXY = "https://api.allorigins.win/raw?url=" + encodeURIComponent(GOLD_URL); // CORS 우회 :contentReference[oaicite:1]{index=1}
+
 Promise.all([
-  fetch("https://data-asg.goldprice.org/dbXRates/USD").then(r => r.json()),
-  fetch("https://api.exchangerate-api.com/v4/latest/USD").then(r => r.json())
+  fetch(GOLD_PROXY).then(r => r.json()),                         // 금(oz) USD
+  fetch("https://api.exchangerate-api.com/v4/latest/USD").then(r => r.json()) // USD→KRW
 ])
   .then(([goldJson, fxJson]) => {
     const item = goldJson.items?.[0];
     if (!item) throw new Error("gold item missing");
 
-    // goldprice.org 응답에서 금(oz) 가격 추출 (필드가 바뀔 수 있어 후보를 여러 개 둠)
+    // goldprice.org 응답에서 금(oz) 가격 필드 추출 (환경에 따라 필드명이 다를 수 있어 후보 처리) :contentReference[oaicite:2]{index=2}
     const goldPerOunceUSD = Number(item.xauPrice ?? item.gold ?? item.price ?? item.ask ?? item.bid);
     if (!Number.isFinite(goldPerOunceUSD) || goldPerOunceUSD <= 0) throw new Error("gold price missing");
 
