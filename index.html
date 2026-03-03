@@ -102,9 +102,13 @@ function fetchPrice() {
 
             document.getElementById("eth-usd").innerText = "$ " + data.ethereum.usd.toLocaleString();
             document.getElementById("eth-krw").innerText = "₩ " + data.ethereum.krw.toLocaleString();
+            
+            const goldPerGramUSD = data["tether-gold"].usd / 31.1035;
+            const goldPerGramKRW = data["tether-gold"].krw / 31.1035;
 
-            document.getElementById("gold-usd").innerText = "$ " + data["tether-gold"].usd.toLocaleString();
-            document.getElementById("gold-krw").innerText = "₩ " + data["tether-gold"].krw.toLocaleString();
+            document.getElementById("gold-usd").innerText = "$ " + goldPerGramUSD.toFixed(2);
+            document.getElementById("gold-krw").innerText = "₩ " + goldPerGramKRW.toLocaleString(undefined, {maximumFractionDigits: 0});
+
         });
 }
 
