@@ -30,7 +30,7 @@ h1 {
 }
 
 table {
-    width: 300px;
+    width: 350px;
     border-collapse: collapse;
 }
 
@@ -42,19 +42,19 @@ th {
 
 td {
     padding: 15px;
-    font-size: 20px;
+    font-size: 18px;
 }
 
-.price {
+.price-usd {
     font-weight: bold;
-    font-size: 22px;
     color: #00ffcc;
-    transition: 0.3s;
 }
 
-.price:hover {
-    transform: scale(1.1);
+.price-krw {
+    font-weight: bold;
+    color: #ffd700;
 }
+
 </style>
 </head>
 
@@ -66,26 +66,32 @@ td {
     <table>
         <tr>
             <th>코인</th>
-            <th>USD 가격</th>
+            <th>USD</th>
+            <th>KRW</th>
         </tr>
         <tr>
             <td>Bitcoin</td>
-            <td id="btc" class="price">불러오는 중...</td>
+            <td id="btc-usd" class="price-usd">불러오는 중...</td>
+            <td id="btc-krw" class="price-krw">불러오는 중...</td>
         </tr>
         <tr>
             <td>Ethereum</td>
-            <td id="eth" class="price">불러오는 중...</td>
+            <td id="eth-usd" class="price-usd">불러오는 중...</td>
+            <td id="eth-krw" class="price-krw">불러오는 중...</td>
         </tr>
     </table>
 </div>
 
 <script>
 function fetchPrice() {
-    fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd")
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw")
         .then(response => response.json())
         .then(data => {
-            document.getElementById("btc").innerText = "$ " + data.bitcoin.usd.toLocaleString();
-            document.getElementById("eth").innerText = "$ " + data.ethereum.usd.toLocaleString();
+            document.getElementById("btc-usd").innerText = "$ " + data.bitcoin.usd.toLocaleString();
+            document.getElementById("btc-krw").innerText = "₩ " + data.bitcoin.krw.toLocaleString();
+
+            document.getElementById("eth-usd").innerText = "$ " + data.ethereum.usd.toLocaleString();
+            document.getElementById("eth-krw").innerText = "₩ " + data.ethereum.krw.toLocaleString();
         });
 }
 
