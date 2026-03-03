@@ -100,29 +100,42 @@ function fetchPrice() {
             document.getElementById("eth-krw").innerText = "₩ " + data.ethereum.krw.toLocaleString();
         });
 
-    // 금 가격 (온스 → g 변환)
-    fetch("https://api.metals.live/v1/spot/gold")
-        .then(response => response.json())
-        .then(data => {
+    // ✅ 금 가격 (goldprice.org 데이터 사용) + 환율로 KRW 계산
+Promise.all([
+  fetch("https://data-asg.goldprice.org/dbXRates/USD").then(r => r.json()),
+  fetch("https://api.exchangerate-api.com/v4/latest/USD").then(r => r.json())
+])
+  .then(([goldJson, fxJson]) => {
+    const item = goldJson.items && goldJson.items[0];
+    if (!item) throw new Error("gold item missing");
 
-            let goldPerOunceUSD = data[0].price;
-            let goldPerGramUSD = goldPerOunceUSD / 31.1035;
+    // goldprice.org 응답에서 금(oz) 가격 필드 후보들 중 하나를 사용
+    const goldPerOunceUSD =
+      Number(item.xauPrice ?? item.gold ?? item.price ?? item.ask ?? item.bid);
 
-            document.getElementById("gold-usd").innerText =
-                "$ " + goldPerGramUSD.toFixed(2);
+    if (!Number.isFinite(goldPerOunceUSD) || goldPerOunceUSD <= 0) {
+      throw new Error("gold price missing");
+    }
 
-            // 환율 가져오기
-            fetch("https://api.exchangerate-api.com/v4/latest/USD")
-                .then(response => response.json())
-                .then(rateData => {
+    const goldPerGramUSD = goldPerOunceUSD / 31.1035;
 
-                    let usdToKrw = rateData.rates.KRW;
-                    let goldPerGramKRW = goldPerGramUSD * usdToKrw;
+    document.getElementById("gold-usd").innerText =
+      "$ " + goldPerGramUSD.toFixed(2);
 
-                    document.getElementById("gold-krw").innerText =
-                        "₩ " + Math.round(goldPerGramKRW).toLocaleString();
-                });
-        });
+    const usdToKrw = fxJson.rates && fxJson.rates.KRW;
+    if (!Number.isFinite(usdToKrw) || usdToKrw <= 0) {
+      throw new Error("KRW rate missing");
+    }
+
+    const goldPerGramKRW = goldPerGramUSD * usdToKrw;
+    document.getElementById("gold-krw").innerText =
+      "₩ " + Math.round(goldPerGramKRW).toLocaleString();
+  })
+  .catch(err => {
+    console.error("Gold fetch failed:", err);
+    document.getElementById("gold-usd").innerText = "불러오기 실패";
+    document.getElementById("gold-krw").innerText = "불러오기 실패";
+  });
 }
 
 fetchPrice();
