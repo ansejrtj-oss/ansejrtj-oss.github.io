@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crypto Price</title>
+</head>
+<body>
+
+<h1>오늘의 비트코인과 이더리움 가격</h1>
+
+<table border="1">
+    <tr>
+        <th>코인</th>
+        <th>USD 가격</th>
+    </tr>
+    <tr>
+        <td>Bitcoin</td>
+        <td id="btc">불러오는 중...</td>
+    </tr>
+    <tr>
+        <td>Ethereum</td>
+        <td id="eth">불러오는 중...</td>
+    </tr>
+</table>
+
+<script>
+function fetchPrice() {
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("btc").innerText = data.bitcoin.usd;
+            document.getElementById("eth").innerText = data.ethereum.usd;
+        });
+}
+
+fetchPrice();
+setInterval(fetchPrice, 10000);
+</script>
+
+</body>
+</html>
