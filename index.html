@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Crypto Price</title>
+<title>Crypto & Gold Price</title>
 
 <style>
 body {
@@ -30,7 +30,7 @@ h1 {
 }
 
 table {
-    width: 350px;
+    width: 420px;
     border-collapse: collapse;
 }
 
@@ -54,18 +54,17 @@ td {
     font-weight: bold;
     color: #ffd700;
 }
-
 </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h1>💰 오늘의 코인 가격</h1>
+    <h1>💰 자산 실시간 가격</h1>
 
     <table>
         <tr>
-            <th>코인</th>
+            <th>자산</th>
             <th>USD</th>
             <th>KRW</th>
         </tr>
@@ -79,11 +78,18 @@ td {
             <td id="eth-usd" class="price-usd">불러오는 중...</td>
             <td id="eth-krw" class="price-krw">불러오는 중...</td>
         </tr>
+        <tr>
+            <td>Gold (1g)</td>
+            <td id="gold-usd" class="price-usd">불러오는 중...</td>
+            <td id="gold-krw" class="price-krw">불러오는 중...</td>
+        </tr>
     </table>
 </div>
 
 <script>
 function fetchPrice() {
+
+    // 코인 가격
     fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,krw")
         .then(response => response.json())
         .then(data => {
@@ -92,6 +98,30 @@ function fetchPrice() {
 
             document.getElementById("eth-usd").innerText = "$ " + data.ethereum.usd.toLocaleString();
             document.getElementById("eth-krw").innerText = "₩ " + data.ethereum.krw.toLocaleString();
+        });
+
+    // 금 가격 (온스 → g 변환)
+    fetch("https://api.metals.live/v1/spot/gold")
+        .then(response => response.json())
+        .then(data => {
+
+            let goldPerOunceUSD = data[0].price;
+            let goldPerGramUSD = goldPerOunceUSD / 31.1035;
+
+            document.getElementById("gold-usd").innerText =
+                "$ " + goldPerGramUSD.toFixed(2);
+
+            // 환율 가져오기
+            fetch("https://api.exchangerate-api.com/v4/latest/USD")
+                .then(response => response.json())
+                .then(rateData => {
+
+                    let usdToKrw = rateData.rates.KRW;
+                    let goldPerGramKRW = goldPerGramUSD * usdToKrw;
+
+                    document.getElementById("gold-krw").innerText =
+                        "₩ " + Math.round(goldPerGramKRW).toLocaleString();
+                });
         });
 }
 
