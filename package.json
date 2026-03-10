@@ -1,0 +1,12 @@
+{
+  "name": "eth-jsonrpc-project",
+  "version": "1.0.0",
+  "description": "Infura JSON-RPC로 최신 이더리움 블록 번호와 트랜잭션 개수를 조회하는 프로젝트",
+  "main": "jsonrpc.js",
+  "scripts": {
+    "start": "node jsonrpc.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
