@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blockchain Lab #3</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ethers.js v6 CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Blockchain Lab #3</h1>
+          <p class="text-gray-400 mt-2">MetaMask 연결 및 ETH 송금 대시보드</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span id="statusDot" class="w-3 h-3 rounded-full bg-gray-500 inline-block"></span>
+          <span id="statusText" class="text-sm text-gray-300">미연결</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Grid -->
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Card 1: Wallet Connect -->
+      <section class="bg-gray-800 rounded-2xl border border-gray-700 p-6 shadow-lg">
+        <div class="flex items-start justify-between mb-5">
+          <div>
+            <h2 class="text-xl font-semibold">지갑 연결</h2>
+            <p class="text-sm text-gray-400 mt-1">MetaMask 지갑을 연결하고 계정 정보를 확인합니다.</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <button
+            id="connectBtn"
+            class="w-full md:w-auto px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 transition font-medium"
+          >
+            MetaMask 연결
+          </button>
+
+          <div
+            id="metamaskWarning"
+            class="hidden rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 px-4 py-3"
+          >
+            MetaMask가 설치되어 있지 않습니다.
+            <a
+              href="https://metamask.io/download/"
+              target="_blank"
+              class="underline font-medium"
+            >
+              MetaMask 설치하기
+            </a>
+          </div>
+
+          <div
+            id="faucetWarning"
+            class="hidden rounded-xl border border-yellow-500/40 bg-yellow-500/10 text-yellow-300 px-4 py-3"
+          >
+            잔액이 0입니다. Faucet에서 ETH를 받아오세요.
+          </div>
+
+          <div class="grid grid-cols-1 gap-4">
+            <div class="rounded-2xl bg-gray-900/60 border border-gray-700 p-4">
+              <p class="text-sm text-gray-400 mb-1">지갑 주소</p>
+              <p id="walletAddress" class="break-all text-sm md:text-base text-gray-100">
+                연결되지 않음
+              </p>
+            </div>
+
+            <div class="rounded-2xl bg-gray-900/60 border border-gray-700 p-4">
+              <p class="text-sm text-gray-400 mb-1">ETH 잔액</p>
+              <p id="walletBalance" class="text-lg font-semibold">-</p>
+            </div>
+
+            <div class="rounded-2xl bg-gray-900/60 border border-gray-700 p-4">
+              <p class="text-sm text-gray-400 mb-1">현재 Nonce</p>
+              <p id="walletNonce" class="text-lg font-semibold">-</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Card 2: ETH Transfer -->
+      <section class="bg-gray-800 rounded-2xl border border-gray-700 p-6 shadow-lg">
+        <div class="mb-5">
+          <h2 class="text-xl font-semibold">ETH 송금</h2>
+          <p class="text-sm text-gray-400 mt-1">받는 주소와 금액을 입력한 뒤 MetaMask로 전송합니다.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label for="recipientInput" class="block text-sm text-gray-300 mb-2">받는 주소</label>
+            <input
+              id="recipientInput"
+              type="text"
+              placeholder="0x..."
+              class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-100 outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label for="amountInput" class="block text-sm text-gray-300 mb-2">금액 (ETH)</label>
+            <input
+              id="amountInput"
+              type="number"
+              min="0"
+              step="0.000001"
+              value="0.001"
+              class="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-100 outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button
+              id="previewBtn"
+              disabled
+              class="flex-1 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              미리보기
+            </button>
+            <button
+              id="sendBtn"
+              disabled
+              class="flex-1 px-5 py-3 rounded-xl bg-green-600 hover:bg-green-500 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              송금 실행
+            </button>
+          </div>
+
+          <div
+            id="transferLoading"
+            class="hidden rounded-xl border border-blue-500/40 bg-blue-500/10 text-blue-300 px-4 py-3"
+          >
+            트랜잭션 처리 중...
+          </div>
+
+          <div
+            id="transferError"
+            class="hidden rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 px-4 py-3 whitespace-pre-line"
+          ></div>
+
+          <div
+            id="previewBox"
+            class="hidden rounded-2xl bg-gray-900/60 border border-gray-700 p-4 space-y-2"
+          >
+            <h3 class="font-semibold text-gray-100">미리보기</h3>
+            <p class="text-sm text-gray-300">현재 Nonce: <span id="previewNonce" class="font-medium text-white">-</span></p>
+            <p class="text-sm text-gray-300">예상 Gas Limit: <span id="previewGasLimit" class="font-medium text-white">21,000</span></p>
+          </div>
+
+          <div
+            id="transferResult"
+            class="hidden rounded-2xl bg-gray-900/60 border border-gray-700 p-4 space-y-3"
+          >
+            <h3 class="font-semibold text-gray-100">전송 결과</h3>
+
+            <div class="grid grid-cols-1 gap-3">
+              <div>
+                <p class="text-xs text-gray-400 mb-1">TX Hash</p>
+                <p id="resultTxHash" class="break-all text-sm text-white">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-gray-400 mb-1">Nonce</p>
+                <p id="resultNonce" class="text-sm text-white">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-gray-400 mb-1">Gas Used</p>
+                <p id="resultGasUsed" class="text-sm text-white">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-gray-400 mb-1">수수료</p>
+                <p id="resultFee" class="text-sm text-white">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-gray-400 mb-1">상태</p>
+                <p id="resultStatus" class="text-sm text-white">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-gray-400 mb-1">Explorer 링크</p>
+                <a
+                  id="resultExplorer"
+                  href="#"
+                  target="_blank"
+                  class="text-sm text-blue-400 underline break-all"
+                >
+                  -
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let provider = null;
+    let signer = null;
+    let currentAddress = null;
+    let currentChainId = null;
+
+    const connectBtn = document.getElementById("connectBtn");
+    const metamaskWarning = document.getElementById("metamaskWarning");
+    const faucetWarning = document.getElementById("faucetWarning");
+
+    const walletAddressEl = document.getElementById("walletAddress");
+    const walletBalanceEl = document.getElementById("walletBalance");
+    const walletNonceEl = document.getElementById("walletNonce");
+
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+
+    const recipientInput = document.getElementById("recipientInput");
+    const amountInput = document.getElementById("amountInput");
+    const previewBtn = document.getElementById("previewBtn");
+    const sendBtn = document.getElementById("sendBtn");
+
+    const transferLoading = document.getElementById("transferLoading");
+    const transferError = document.getElementById("transferError");
+    const previewBox = document.getElementById("previewBox");
+    const previewNonce = document.getElementById("previewNonce");
+    const previewGasLimit = document.getElementById("previewGasLimit");
+
+    const transferResult = document.getElementById("transferResult");
+    const resultTxHash = document.getElementById("resultTxHash");
+    const resultNonce = document.getElementById("resultNonce");
+    const resultGasUsed = document.getElementById("resultGasUsed");
+    const resultFee = document.getElementById("resultFee");
+    const resultStatus = document.getElementById("resultStatus");
+    const resultExplorer = document.getElementById("resultExplorer");
+
+    function setConnectedUI(isConnected) {
+      if (isConnected) {
+        statusDot.className = "w-3 h-3 rounded-full bg-green-400 inline-block";
+        statusText.textContent = "연결됨";
+        previewBtn.disabled = false;
+        sendBtn.disabled = false;
+      } else {
+        statusDot.className = "w-3 h-3 rounded-full bg-gray-500 inline-block";
+        statusText.textContent = "미연결";
+        previewBtn.disabled = true;
+        sendBtn.disabled = true;
+      }
+    }
+
+    function showTransferError(message) {
+      transferError.textContent = message;
+      transferError.classList.remove("hidden");
+    }
+
+    function hideTransferError() {
+      transferError.textContent = "";
+      transferError.classList.add("hidden");
+    }
+
+    function showLoading(show) {
+      if (show) {
+        transferLoading.classList.remove("hidden");
+      } else {
+        transferLoading.classList.add("hidden");
+      }
+    }
+
+    function hideTransferResult() {
+      transferResult.classList.add("hidden");
+    }
+
+    function getExplorerBaseUrl(chainId) {
+      switch (Number(chainId)) {
+        case 1:
+          return "https://etherscan.io/tx/";
+        case 11155111:
+          return "https://sepolia.etherscan.io/tx/";
+        case 84532:
+          return "https://sepolia.basescan.org/tx/";
+        default:
+          return "";
+      }
+    }
+
+    async function updateWalletInfo(address) {
+      try {
+        const balance = await provider.getBalance(address);
+        const nonce = await provider.getTransactionCount(address);
+        const network = await provider.getNetwork();
+
+        currentChainId = Number(network.chainId);
+
+        const formattedBalance = ethers.formatEther(balance);
+
+        walletAddressEl.textContent = address;
+        walletBalanceEl.textContent = `${Number(formattedBalance).toFixed(6)} ETH`;
+        walletNonceEl.textContent = nonce;
+
+        if (balance === 0n) {
+          faucetWarning.classList.remove("hidden");
+        } else {
+          faucetWarning.classList.add("hidden");
+        }
+      } catch (error) {
+        console.error("지갑 정보 조회 실패:", error);
+        alert("지갑 정보를 불러오는 중 오류가 발생했습니다.");
+      }
+    }
+
+    function validateTransferInputs() {
+      const rawTo = recipientInput.value.trim();
+      const rawAmount = amountInput.value.trim();
+
+      if (!currentAddress || !provider || !signer) {
+        throw new Error("먼저 MetaMask 지갑을 연결하세요.");
+      }
+
+      let to;
+      try {
+        to = ethers.getAddress(rawTo);
+      } catch (error) {
+        throw new Error("유효하지 않은 받는 주소입니다.");
+      }
+
+      if (!rawAmount || Number(rawAmount) <= 0) {
+        throw new Error("금액은 0보다 커야 합니다.");
+      }
+
+      let value;
+      try {
+        value = ethers.parseEther(rawAmount);
+      } catch (error) {
+        throw new Error("유효하지 않은 ETH 금액 형식입니다.");
+      }
+
+      return { to, rawAmount, value };
+    }
+
+    async function previewTransaction() {
+      hideTransferError();
+      hideTransferResult();
+      previewBox.classList.add("hidden");
+
+      try {
+        validateTransferInputs();
+
+        const nonce = await provider.getTransactionCount(currentAddress);
+
+        previewNonce.textContent = nonce;
+        previewGasLimit.textContent = "21,000";
+        previewBox.classList.remove("hidden");
+      } catch (error) {
+        showTransferError(error.message || "미리보기 중 오류가 발생했습니다.");
+      }
+    }
+
+    async function sendTransaction() {
+      hideTransferError();
+      hideTransferResult();
+      previewBox.classList.add("hidden");
+      showLoading(true);
+
+      try {
+        const { to, rawAmount, value } = validateTransferInputs();
+
+        const tx = await signer.sendTransaction({
+          to,
+          value: ethers.parseEther(rawAmount)
+        });
+
+        const receipt = await tx.wait();
+
+        const gasUsed = receipt.gasUsed;
+        const gasPrice = receipt.gasPrice ?? tx.gasPrice ?? 0n;
+        const fee = gasUsed * gasPrice;
+        const explorerBase = getExplorerBaseUrl(currentChainId);
+        const explorerUrl = explorerBase ? explorerBase + tx.hash : "#";
+
+        resultTxHash.textContent = tx.hash;
+        resultNonce.textContent = tx.nonce;
+        resultGasUsed.textContent = gasUsed.toString();
+        resultFee.textContent = `${ethers.formatEther(fee)} ETH`;
+        resultStatus.textContent = receipt.status === 1 ? "성공" : "실패";
+
+        if (explorerBase) {
+          resultExplorer.href = explorerUrl;
+          resultExplorer.textContent = explorerUrl;
+        } else {
+          resultExplorer.href = "#";
+          resultExplorer.textContent = "현재 네트워크의 Explorer 링크를 자동으로 찾을 수 없습니다.";
+        }
+
+        transferResult.classList.remove("hidden");
+
+        await updateWalletInfo(currentAddress);
+      } catch (error) {
+        console.error("송금 실패:", error);
+
+        if (error.code === 4001) {
+          showTransferError("사용자가 트랜잭션을 거절했습니다.");
+        } else if (
+          String(error.message).includes("insufficient funds") ||
+          String(error.shortMessage || "").includes("insufficient funds")
+        ) {
+          showTransferError("잔액이 부족합니다. 전송 금액과 가스비를 포함한 잔액을 확인하세요.");
+        } else if (error.message) {
+          showTransferError(error.message);
+        } else {
+          showTransferError("송금 중 알 수 없는 오류가 발생했습니다.");
+        }
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) {
+        metamaskWarning.classList.remove("hidden");
+        setConnectedUI(false);
+        return;
+      }
+
+      metamaskWarning.classList.add("hidden");
+
+      try {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+
+        signer = await provider.getSigner();
+        currentAddress = await signer.getAddress();
+
+        setConnectedUI(true);
+        await updateWalletInfo(currentAddress);
+      } catch (error) {
+        console.error("MetaMask 연결 실패:", error);
+        setConnectedUI(false);
+        alert("MetaMask 연결에 실패했습니다.");
+      }
+    }
+
+    async function initIfAlreadyConnected() {
+      if (!window.ethereum) {
+        metamaskWarning.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await window.ethereum.request({ method: "eth_accounts" });
+
+        if (accounts && accounts.length > 0) {
+          signer = await provider.getSigner();
+          currentAddress = await signer.getAddress();
+
+          setConnectedUI(true);
+          await updateWalletInfo(currentAddress);
+        } else {
+          setConnectedUI(false);
+        }
+      } catch (error) {
+        console.error("초기 연결 확인 실패:", error);
+      }
+    }
+
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", async (accounts) => {
+        if (accounts.length === 0) {
+          currentAddress = null;
+          currentChainId = null;
+          walletAddressEl.textContent = "연결되지 않음";
+          walletBalanceEl.textContent = "-";
+          walletNonceEl.textContent = "-";
+          faucetWarning.classList.add("hidden");
+          previewBox.classList.add("hidden");
+          hideTransferResult();
+          hideTransferError();
+          setConnectedUI(false);
+          return;
+        }
+
+        currentAddress = accounts[0];
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        setConnectedUI(true);
+        await updateWalletInfo(currentAddress);
+      });
+
+      window.ethereum.on("chainChanged", async () => {
+        if (currentAddress) {
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
+          await updateWalletInfo(currentAddress);
+        }
+      });
+    }
+
+    connectBtn.addEventListener("click", connectWallet);
+    previewBtn.addEventListener("click", previewTransaction);
+    sendBtn.addEventListener("click", sendTransaction);
+
+    initIfAlreadyConnected();
+  </script>
+</body>
+</html>
