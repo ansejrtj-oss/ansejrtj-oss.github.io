@@ -1,0 +1,102 @@
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pragma solidity ^0.8.26;
+
+contract HelloWorld {
+    string public greet = "Hello World";
+}
+
+
+---->>>>  SendToTA.sol
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+contract HelloWorld {
+    string private _greeting = "Hello, World!";
+
+    function greet() public view returns (string memory) {
+        return _greeting;
+    }
+
+    function setGreeting(string memory newGreeting) public {
+        _greeting = newGreeting;
+    }
+}
+
+
+---->>>> SendToTA2.sol
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract Faucet {
+
+    // 💧 1회 출금 금액 (0.01 ETH)
+    uint256 public constant WITHDRAWAL_AMOUNT = 0.01 ether;
+
+    // ⏱ 24시간 제한
+    uint256 public constant LOCK_TIME = 1 days;
+
+    // 👤 마지막 출금 시간 저장
+    mapping(address => uint256) public lastWithdrawalTime;
+
+    // 📢 이벤트
+    event Withdrawal(address indexed user, uint256 amount);
+
+    // 💰 컨트랙트에 돈 넣기
+    receive() external payable {}
+
+    // 🔥 출금 함수 (네가 준 코드)
+    function withdraw() public {
+
+        // 1. 시간 검증
+        require(
+            block.timestamp >= lastWithdrawalTime[msg.sender] + LOCK_TIME,
+            "Wait 24 hours"
+        );
+
+        // 2. 잔액 검증
+        require(
+            address(this).balance >= WITHDRAWAL_AMOUNT,
+            "Not enough funds"
+        );
+
+        // 3. 출금 시간 기록
+        lastWithdrawalTime[msg.sender] = block.timestamp;
+
+        // 4. ETH 전송
+        payable(msg.sender).transfer(WITHDRAWAL_AMOUNT);
+
+        // 5. 이벤트
+        emit Withdrawal(msg.sender, WITHDRAWAL_AMOUNT);
+    }
+
+    // 🔍 컨트랙트 잔액 확인
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+}
+
+
+---->>>> 위 sol을 통해서 Remix IDE 에서 faucet 구현 가능하다.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
