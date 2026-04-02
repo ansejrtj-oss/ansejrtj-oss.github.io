@@ -147,8 +147,6 @@ contract Faucet {
     }
 } 
 
-<img width="826" height="765" alt="image" src="https://github.com/user-attachments/assets/f4b8c567-c343-4697-8923-9f39a7a5bb59" />
-
 
 
 
