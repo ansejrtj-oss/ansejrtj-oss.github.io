@@ -56,7 +56,9 @@ contract Counter {
 
 
 Counter.sol
-<img width="1092" height="683" alt="image" src="https://github.com/user-attachments/assets/979d644b-f9e9-48cb-b9b6-69e9c2014a4d" />
+
+<img width="1047" height="675" alt="image" src="https://github.com/user-attachments/assets/64120e43-c5d9-4bed-999e-0608b7244e33" />
+
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,6 +92,7 @@ contract CounterNumber {
 
 CounterNumber.sol
 
+<img width="1220" height="767" alt="image" src="https://github.com/user-attachments/assets/efacc67f-e275-4a2b-aeb1-49a27215fe9e" />
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -156,6 +159,7 @@ contract Faucet {
 
 faucet 제작 완료
 
+<img width="1091" height="780" alt="image" src="https://github.com/user-attachments/assets/700ab675-8208-43e4-8f5e-c7e07c704d75" />
 
 
    
