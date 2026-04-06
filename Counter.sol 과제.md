@@ -56,6 +56,8 @@ contract Counter {
 
 
 Counter.sol
+<img width="1092" height="683" alt="image" src="https://github.com/user-attachments/assets/979d644b-f9e9-48cb-b9b6-69e9c2014a4d" />
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
