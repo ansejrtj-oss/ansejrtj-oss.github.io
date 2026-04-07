@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sepolia Faucet</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #141e30, #243b55);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 700px;
+      max-width: 95%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 15px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .row {
+      margin: 10px 0;
+      word-break: break-all;
+    }
+
+    button {
+      background: #00c896;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .claim-btn {
+      background: #3b82f6;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #ffd700;
+    }
+
+    a {
+      color: #7dd3fc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #status {
+      margin-top: 10px;
+      color: #90ee90;
+      font-weight: bold;
+    }
+
+    canvas {
+      background: white;
+      border-radius: 10px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💧 Sepolia Faucet</h1>
+
+    <div class="card">
+      <button id="connectButton">Connect MetaMask</button>
+      <button id="claimButton" class="claim-btn">Claim 0.01 ETH</button>
+
+      <div class="row"><span class="label">Connected Wallet:</span> <span id="walletAddress">Not connected</span></div>
+      <div class="row"><span class="label">Faucet Balance:</span> <span id="faucetBalance">-</span> ETH</div>
+      <div class="row"><span class="label">Request Amount:</span> 0.01 ETH</div>
+      <div class="row"><span class="label">Transaction Hash:</span> <span id="txHash">No transaction yet</span></div>
+      <div id="status"></div>
+    </div>
+
+    <div class="card">
+      <h3>Faucet Balance Over Time</h3>
+      <canvas id="balanceChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    let provider;
+    let signer;
+    let contract;
+    let userAddress = "";
+
+    // 여기에 배포된 컨트랙트 주소 넣기
+    const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS";
+
+    // Faucet ABI
+    const contractABI = [
+      "function claim() external",
+      "function getBalance() external view returns (uint256)",
+      "function REQUEST_AMOUNT() external view returns (uint256)"
+    ];
+
+    const walletAddressEl = document.getElementById("walletAddress");
+    const faucetBalanceEl = document.getElementById("faucetBalance");
+    const txHashEl = document.getElementById("txHash");
+    const statusEl = document.getElementById("status");
+
+    const chartCtx = document.getElementById("balanceChart").getContext("2d");
+    const balanceLabels = [];
+    const balanceData = [];
+
+    const balanceChart = new Chart(chartCtx, {
+      type: "line",
+      data: {
+        labels: balanceLabels,
+        datasets: [{
+          label: "Faucet Balance (ETH)",
+          data: balanceData,
+          borderWidth: 2,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) {
+          alert("MetaMask is not installed.");
+          return;
+        }
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        userAddress = await signer.getAddress();
+
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== 11155111) {
+          alert("Please switch MetaMask to Sepolia network.");
+          return;
+        }
+
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        walletAddressEl.textContent = userAddress;
+        statusEl.textContent = "Wallet connected successfully.";
+
+        await updateBalance();
+      } catch (error) {
+        console.error(error);
+        statusEl.textContent = "Wallet connection failed.";
+      }
+    }
+
+    async function updateBalance() {
+      try {
+        if (!contract) return;
+
+        const balanceWei = await contract.getBalance();
+        const balanceEth = ethers.formatEther(balanceWei);
+        faucetBalanceEl.textContent = Number(balanceEth).toFixed(4);
+
+        const now = new Date().toLocaleTimeString();
+        balanceLabels.push(now);
+        balanceData.push(Number(balanceEth));
+
+        if (balanceLabels.length > 10) {
+          balanceLabels.shift();
+          balanceData.shift();
+        }
+
+        balanceChart.update();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function claimETH() {
+      try {
+        if (!contract) {
+          alert("Please connect MetaMask first.");
+          return;
+        }
+
+        statusEl.textContent = "Claim transaction is being sent...";
+        txHashEl.textContent = "Waiting for confirmation...";
+
+        const tx = await contract.claim();
+        txHashEl.innerHTML = `<a href="https://sepolia.etherscan.io/tx/${tx.hash}" target="_blank">${tx.hash}</a>`;
+
+        statusEl.textContent = "Transaction sent. Waiting for block confirmation...";
+        await tx.wait();
+
+        statusEl.textContent = "Claim successful!";
+        await updateBalance();
+      } catch (error) {
+        console.error(error);
+        statusEl.textContent = "Claim failed: " + (error.reason || error.message);
+      }
+    }
+
+    document.getElementById("connectButton").addEventListener("click", connectWallet);
+    document.getElementById("claimButton").addEventListener("click", claimETH);
+
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", () => location.reload());
+      window.ethereum.on("chainChanged", () => location.reload());
+    }
+  </script>
+</body>
+</html>
